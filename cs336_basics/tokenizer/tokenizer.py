@@ -1,11 +1,9 @@
 import pickle
-import token
 from collections.abc import Iterable
 import regex as re
-from collections import Counter
 
-from sympy import false
 from cs336_basics.log import logger
+
 
 PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
 
