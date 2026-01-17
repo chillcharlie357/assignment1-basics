@@ -136,20 +136,22 @@ def train_bpe(input_path: str, vocab_size: int, special_tokens: list[str]):
 
 
 if __name__ == "__main__":
-    special_token = ["<|endoftext|>"]
-
-    # input_file = "data/TinyStoriesV2-GPT4-train.txt"
-    # vocab_file = "data/save/TinyStoriesV2-GPT4-train_vocab.pkl"
-    # merges_file = "data/save/TinyStoriesV2-GPT4-train_merges.pkl"
-
-    input_file = "tests/fixtures/tinystories_sample_5M.txt"
-    vocab_file = "data/save/tinystories_sample_5M_vocab.pkl"
-    merges_file = "data/save/tinystories_sample_5M_merges.pkl"
+    from cs336_basics.config import config
+    
+    special_tokens = config.tokenizer.training.special_tokens
+    input_file = config.tokenizer.data.input_path
+    vocab_file = config.tokenizer.data.vocab_path
+    merges_file = config.tokenizer.data.merges_path
+    vocab_size = config.tokenizer.training.vocab_size
         
     if os.path.exists(input_file):
-        vocab, merges = train_bpe(input_file, 12800, special_token)
+        vocab, merges = train_bpe(input_file, vocab_size, special_tokens)
         logger.info("finish train bpe")
         import pickle
+        
+        # Ensure directory exists
+        os.makedirs(os.path.dirname(vocab_file), exist_ok=True)
+        os.makedirs(os.path.dirname(merges_file), exist_ok=True)
         
         with open(vocab_file, "wb") as f:
             pickle.dump(vocab, f)

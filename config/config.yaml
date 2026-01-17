@@ -1,0 +1,18 @@
+logging:
+  name: "cs336"
+  level: "INFO"
+  save_dir: "logs"
+  filename: "app.log"
+  rich:
+    show_path: true
+    rich_tracebacks: true
+    markup: true
+
+tokenizer:
+  data:
+    input_path: "tests/fixtures/tinystories_sample_5M.txt"
+    vocab_path: "data/vocab/tinystories_sample_5M_vocab.pkl"
+    merges_path: "data/vocab/tinystories_sample_5M_merges.pkl"
+  training:
+    vocab_size: 12800
+    special_tokens: ["<|endoftext|>"]

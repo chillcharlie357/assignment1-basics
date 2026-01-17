@@ -145,19 +145,36 @@ class Tokenizer:
         output = b"".join(bytes_list)
         return output.decode('utf-8', errors="replace")
 
-if __name__ == "__main__":
-    vocab_path = "data/save/tinystories_sample_5M_vocab.pkl"
-    merges_path = "data/save/tinystories_sample_5M_merges.pkl"
-    special_tokens = ["<|endoftext|>"]
 
-    tokenizer = Tokenizer.from_files(vocab_filepath=vocab_path, 
-                        merges_filepath=merges_path, 
-                        special_tokens=special_tokens)
+def _local_test():
+    try:
+        from cs336_basics.config import config
+        
+        vocab_path = config.tokenizer.data.vocab_path
+        merges_path = config.tokenizer.data.merges_path
+        special_tokens = config.tokenizer.training.special_tokens
 
-    logger.info("load tokenizer")
+        tokenizer = Tokenizer.from_files(vocab_filepath=vocab_path, 
+                            merges_filepath=merges_path, 
+                            special_tokens=special_tokens)
+        logger.info("load tokenizer from config")
+    except Exception as e:
+        logger.warning(f"Failed to load tokenizer from config: {e}. Falling back to manual paths.")
+        vocab_path = "data/vocab/tinystories_sample_5M_vocab.pkl"
+        merges_path = "data/vocab/tinystories_sample_5M_merges.pkl"
+        special_tokens = ["<|endoftext|>"]
+
+        tokenizer = Tokenizer.from_files(vocab_filepath=vocab_path, 
+                            merges_filepath=merges_path, 
+                            special_tokens=special_tokens)
+        logger.info("load tokenizer manually")
 
     tokens = tokenizer.encode("Héllò hôw <|endoftext|><|endoftext|> are ü? 🙃<|endoftext|>")
     logger.info(f"encode :{tokens}")
 
     decoded_str = tokenizer.decode(tokens)
     logger.info(f"decode: {decoded_str}")
+
+
+if __name__ == "__main__":
+    _local_test()

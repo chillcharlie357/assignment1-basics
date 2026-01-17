@@ -1,8 +1,12 @@
 import logging
 import os
 from rich.logging import RichHandler
+from cs336_basics.config import config
 
-def _get_logger(name="cs336"):
+def _get_logger(name=None):
+    if name is None:
+        name = config.logging.name
+
     # 1. 创建日志记录器
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)  # 允许记录所有级别的日志
@@ -13,16 +17,16 @@ def _get_logger(name="cs336"):
 
     # 2. 配置 RichHandler (用于控制台漂亮输出)
     console_handler = RichHandler(
-        level="INFO",               # 控制台只显示 INFO 及以上
-        show_path=True,             # 显示是哪个文件在哪一行打印的
-        rich_tracebacks=True,       # 极其美观的代码报错回溯
-        markup=True                 # 允许在日志中使用 [bold red] 这种标签
+        level=config.logging.level,
+        show_path=config.logging.rich.show_path,
+        rich_tracebacks=config.logging.rich.rich_tracebacks,
+        markup=config.logging.rich.markup
     )
 
     # 3. 配置 FileHandler (用于记录到文件，方便以后查错)
-    log_dir = "logs"
+    log_dir = config.logging.save_dir
     os.makedirs(log_dir, exist_ok=True)
-    file_handler = logging.FileHandler(f"{log_dir}/app.log", encoding="utf-8")
+    file_handler = logging.FileHandler(os.path.join(log_dir, config.logging.filename), encoding="utf-8")
     file_handler.setLevel(logging.DEBUG) # 文件里记录更详细的 DEBUG 信息
     
     # 纯文本格式，适合 grep 搜索
