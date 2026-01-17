@@ -1,6 +1,6 @@
 import pickle
 import token
-from typing import Iterable
+from collections.abc import Iterable
 import regex as re
 from collections import Counter
 
@@ -20,6 +20,7 @@ class Tokenizer:
         self.vocab_size: int = len(vocab)
         self.vocab_inv: dict[bytes, int] = {v: k for k, v in self.vocab.items()}
         self.vocab_values = set(self.vocab.values())
+        self.ranks = dict(zip(merges, range(len(merges))))
 
     @classmethod
     def from_files(cls, vocab_filepath: str, merges_filepath, special_tokens=None):
@@ -63,40 +64,48 @@ class Tokenizer:
         else:
             _iters = re.finditer(PAT,text)
             return [(item.group().encode("utf-8"), False) for item in _iters]
-        
 
     def _bpe_merge(self, text_chunks: list[tuple[bytes, bool]]):
         # 对每个 pre-tokenized chunk 分别进行 BPE merge
         merged_chunks = []
         for chunk, is_special in text_chunks:
-            # speical token 不做处理
+            # special token 不做处理
             if is_special:
                 merged_chunks.append(chunk)
                 continue
 
             # 普通token将 bytes 转为 list[bytes] 用于处理，例如 b"hello" -> [b"h", b"e", b"l", b"l", b"o"]
             word = [bytes([b]) for b in chunk]
-            word_len = len(word)
             
-            while True:
-                # 重复merge直到new word不再变化
-                new_word: list[bytes] = []
-                merged = False
+            while len(word) > 1:
+                # Find the pair with the lowest rank
+                min_rank = float("inf")
+                min_pair = None
+                
+                for i in range(len(word) - 1):
+                    pair = (word[i], word[i+1])
+                    if pair in self.ranks:
+                        rank = self.ranks[pair]
+                        if rank < min_rank:
+                            min_rank = rank
+                            min_pair = pair
+                
+                if min_pair is None:
+                    break
+                
+                # Merge the pair
+                new_word = []
                 i = 0
-                while i < word_len:
-                    if i < word_len - 1 and word[i] + word[i + 1] in self.vocab_values:
-                        new_word.append(word[i] + word[i + 1])
+                while i < len(word):
+                    if i < len(word) - 1 and (word[i], word[i+1]) == min_pair:
+                        new_word.append(word[i] + word[i+1])
                         i += 2
-                        merged = True
                     else:
                         new_word.append(word[i])
                         i += 1
-                
                 word = new_word
-                word_len = len(word)
-                if not merged:
-                    merged_chunks.extend(word)
-                    break
+            
+            merged_chunks.extend(word)
         return merged_chunks
 
     def encode(self, text: str) -> list[int]:
