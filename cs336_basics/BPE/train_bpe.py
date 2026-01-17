@@ -6,53 +6,9 @@ from typing import BinaryIO
 import regex as re
 import multiprocessing
 from collections import defaultdict, Counter
-
-
-def find_chunk_boundaries(
-    file: BinaryIO,
-    desired_num_chunks: int,
-    split_special_token: bytes,
-) -> list[int]:
-    """
-    Chunk the file into parts that can be counted independently.
-    May return fewer chunks if the boundaries end up overlapping.
-    """
-    assert isinstance(split_special_token, bytes), "Must represent special token as a bytestring"
-
-    # Get total file size in bytes
-    file.seek(0, os.SEEK_END)
-    file_size = file.tell()
-    file.seek(0)
-
-    chunk_size = file_size // desired_num_chunks
-
-    # Initial guesses for chunk boundary locations, uniformly spaced
-    # Chunks start on previous index, don't include last index
-    chunk_boundaries = [i * chunk_size for i in range(desired_num_chunks + 1)]
-    chunk_boundaries[-1] = file_size
-
-    mini_chunk_size = 4096  # Read ahead by 4k bytes at a time
-
-    for bi in range(1, len(chunk_boundaries) - 1):
-        initial_position = chunk_boundaries[bi]
-        file.seek(initial_position)  # Start at boundary guess
-        while True:
-            mini_chunk = file.read(mini_chunk_size)  # Read a mini chunk
-
-            # If EOF, this boundary should be at the end of the file
-            if mini_chunk == b"":
-                chunk_boundaries[bi] = file_size
-                break
-
-            # Find the special token in the mini chunk
-            found_at = mini_chunk.find(split_special_token)
-            if found_at != -1:
-                chunk_boundaries[bi] = initial_position + found_at
-                break
-            initial_position += mini_chunk_size
-
-    # Make sure all boundaries are unique, but might be fewer than desired_num_chunks
-    return sorted(set(chunk_boundaries))
+from cs336_basics.log import logger
+from tqdm import tqdm, trange
+from cs336_basics.pretokenization_example import find_chunk_boundaries
 
 
 
@@ -60,11 +16,11 @@ def pre_tokenization(input_seq: bytes, special_tokens: list[str]):
     PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
     # print(input_seq)
     # remove special tokens
-    pattern = re.escape('|'.join(t for t in special_tokens)) # 防止 | 破坏正则表达式
+    pattern = '|'.join(re.escape(t) for t in special_tokens)
     splits = re.split(pattern, input_seq.decode("utf-8")) # 去掉special token
     
     counts = Counter[bytes]()
-    for part in splits:
+    for part in tqdm(splits, desc="pre-tokenization splits"):
         if not part:
             continue
         iters = re.finditer(PAT, part)
@@ -127,24 +83,28 @@ def train_bpe(input_path: str, vocab_size: int, special_tokens: list[str]):
     merges: list[tuple[bytes, bytes]] = []
 
     # pre-tokenization 
+    logger.info("start pre tokenization")
     global_count = Counter[bytes]()
     with open(input_path, "rb") as f:
         num_processes = 4
         boundaries = find_chunk_boundaries(f, num_processes, b"<|endoftext|>")
-
-        # The following is a serial implementation, but you can parallelize this
-        # by sending each start/end pair to a set of processes.
 
         def chunk_generator():
             for start,end in zip(boundaries[:-1], boundaries[1:]):
                 f.seek(start)
                 yield f.read(end - start)
         # 多线程计算pre token
-        with multiprocessing.Pool(num_processes) as pool:
-            partial_pre_tokenization = partial(pre_tokenization, special_tokens=special_tokens)
-            results = pool.imap_unordered(partial_pre_tokenization, chunk_generator())
-            for result in results:
-                global_count.update(result)
+        with tqdm(total=len(boundaries)-1, desc="pre tokenization") as pbar:
+            pool = multiprocessing.Pool(num_processes)
+            try:
+                partial_pre_tokenization = partial(pre_tokenization, special_tokens=special_tokens)
+                results = pool.imap_unordered(partial_pre_tokenization, chunk_generator())
+                for result in results:
+                    global_count.update(result)
+                    pbar.update(1)
+            finally:
+                pool.close() # 停止接受新任务
+                pool.join() # 等待所有子进程结束
         
         # print(global_count)
     
@@ -153,7 +113,8 @@ def train_bpe(input_path: str, vocab_size: int, special_tokens: list[str]):
     word_counts = {tuple(bytes([b]) for b in token): count for token, count in global_count.items()}
 
     # BPE merge
-    for i in range(vocab_size - init_vocab_size):
+    logger.info("start merge")
+    for i in trange(vocab_size - init_vocab_size):
         stats = get_stats(word_counts)
         if not stats:
             break
@@ -172,21 +133,33 @@ def train_bpe(input_path: str, vocab_size: int, special_tokens: list[str]):
 
         
         # if (i + 1) % 100 == 0:
-        #     print(f"Merge {i+1}/{vocab_size - init_vocab_size}: {most_frequent_pair} -> {new_token}")
-    
+        #     logger.info(f"Merge {i+1}: {most_frequent_pair} -> {new_token}")
+    logger.info("finish bpe merge")
     return (vocab, merges)
 
 
 if __name__ == "__main__":
     special_token = ["<|endoftext|>"]
-    # input_file = "data/TinyStoriesV2-GPT4-valid.txt"
-    # Use a file that actually exists for testing
-    input_file = "../../tests/fixtures/tinystories_sample.txt"
-    if not os.path.exists(input_file):
-        # Fallback if running from a different CWD
-        input_file = "tests/fixtures/tinystories_sample.txt"
+
+    # input_file = "data/TinyStoriesV2-GPT4-train.txt"
+    # vocab_file = "data/save/TinyStoriesV2-GPT4-train_vocab.pkl"
+    # merges_file = "data/save/TinyStoriesV2-GPT4-train_merges.pkl"
+
+    input_file = "tests/fixtures/tinystories_sample_5M.txt"
+    vocab_file = "data/save/tinystories_sample_5M_vocab.pkl"
+    merges_file = "data/save/tinystories_sample_5M_merges.pkl"
         
     if os.path.exists(input_file):
-        train_bpe(input_file, 12800, special_token)
+        vocab, merges = train_bpe(input_file, 12800, special_token)
+        logger.info("finish train bpe")
+        import pickle
+        
+        with open(vocab_file, "wb") as f:
+            pickle.dump(vocab, f)
+            logger.info(f"save vocab to {vocab_file}")
+        with open(merges_file, "wb") as f:
+            pickle.dump(merges, f)
+            logger.info(f"save merges to {merges_file}")
+            
     else:
-        print(f"Error: Could not find input file at {input_file} or ../../tests/fixtures/tinystories_sample.txt")
+        logger.error(f"Error: Could not find input file at {input_file}")
