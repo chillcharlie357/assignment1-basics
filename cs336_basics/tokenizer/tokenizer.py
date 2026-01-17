@@ -146,6 +146,12 @@ class Tokenizer:
         return output.decode('utf-8', errors="replace")
 
 
+# def _sample_documents():
+#     tinyStories_path = "data/TinyStoriesV2-GPT4-train.txt"
+#     openWebText_path = "data/owt_train.txt"
+
+    
+
 def _local_test():
     try:
         from cs336_basics.config import config
@@ -158,22 +164,14 @@ def _local_test():
                             merges_filepath=merges_path, 
                             special_tokens=special_tokens)
         logger.info("load tokenizer from config")
+        tokens = tokenizer.encode("Héllò hôw <|endoftext|><|endoftext|> are ü? 🙃<|endoftext|>")
+        logger.info(f"encode :{tokens}")
+
+        decoded_str = tokenizer.decode(tokens)
+
+        logger.info(f"decode: {decoded_str}")
     except Exception as e:
         logger.warning(f"Failed to load tokenizer from config: {e}. Falling back to manual paths.")
-        vocab_path = "data/vocab/tinystories_sample_5M_vocab.pkl"
-        merges_path = "data/vocab/tinystories_sample_5M_merges.pkl"
-        special_tokens = ["<|endoftext|>"]
-
-        tokenizer = Tokenizer.from_files(vocab_filepath=vocab_path, 
-                            merges_filepath=merges_path, 
-                            special_tokens=special_tokens)
-        logger.info("load tokenizer manually")
-
-    tokens = tokenizer.encode("Héllò hôw <|endoftext|><|endoftext|> are ü? 🙃<|endoftext|>")
-    logger.info(f"encode :{tokens}")
-
-    decoded_str = tokenizer.decode(tokens)
-    logger.info(f"decode: {decoded_str}")
 
 
 if __name__ == "__main__":

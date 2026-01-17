@@ -10,7 +10,10 @@ logging:
 
 tokenizer:
   data:
-    input_path: "tests/fixtures/tinystories_sample_5M.txt"
+    # input_path: "tests/fixtures/tinystories_sample_5M.txt"
+    # vocab_path: "data/vocab/tinystories_sample_5M_vocab.pkl"
+    # merges_path: "data/vocab/tinystories_sample_5M_merges.pkl"
+    input_path: "data/TinyStoriesV2-GPT4-train.txt"
     vocab_path: "data/vocab/tinystories_sample_5M_vocab.pkl"
     merges_path: "data/vocab/tinystories_sample_5M_merges.pkl"
   training:
