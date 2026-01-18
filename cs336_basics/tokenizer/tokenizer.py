@@ -112,16 +112,16 @@ class Tokenizer:
 
         text_chunks = self._pre_tokenize(text)
 
-        logger.info("pre tokenized")
+        logger.debug("pre tokenized")
 
         merged_bytes = self._bpe_merge(text_chunks)
 
-        logger.info("merged")
+        logger.debug("merged")
 
         # tokenize
         try:
             tokens = [self.vocab_inv[byte] for byte in merged_bytes]
-            logger.info("toenized")
+            logger.debug("toenized")
             return tokens
         except Exception as e:
             logger.error(e)
@@ -163,13 +163,13 @@ def _local_test():
         tokenizer = Tokenizer.from_files(vocab_filepath=vocab_path, 
                             merges_filepath=merges_path, 
                             special_tokens=special_tokens)
-        logger.info("load tokenizer from config")
+        logger.debug("load tokenizer from config")
         tokens = tokenizer.encode("Héllò hôw <|endoftext|><|endoftext|> are ü? 🙃<|endoftext|>")
-        logger.info(f"encode :{tokens}")
+        logger.debug(f"encode :{tokens}")
 
         decoded_str = tokenizer.decode(tokens)
 
-        logger.info(f"decode: {decoded_str}")
+        logger.debug(f"decode: {decoded_str}")
     except Exception as e:
         logger.warning(f"Failed to load tokenizer from config: {e}. Falling back to manual paths.")
 
