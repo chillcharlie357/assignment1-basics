@@ -1,7 +1,7 @@
 from sympy import tensor
 import torch.nn as nn
 import torch
-
+from .utils import get_device
 class Embedding(nn.Module):
     def __init__(self, num_embeddings: int, embedding_dim: int, device: torch.device | None = None, dtype : torch.dtype | None = None) -> None:
         """
@@ -13,14 +13,7 @@ class Embedding(nn.Module):
         super().__init__()
 
         self.dtype = dtype if dtype else torch.float32
-        if device:
-            self.device = device
-        elif torch.cuda.is_available():
-            self.device = torch.device("cuda")
-        elif torch.backends.mps.is_available():
-            self.device = torch.device("mps")
-        else:
-            self.device = torch.device("cpu")
+        self.device = get_device(device)
         
         self.weight = nn.Parameter(torch.empty(num_embeddings, embedding_dim, device=self.device, dtype=self.dtype))
 

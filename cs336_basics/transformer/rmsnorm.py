@@ -1,6 +1,6 @@
 from torch import nn
 import torch
-
+from .utils import get_device
 class RMSNorm(nn.Module):
     def __init__(self, d_model: int, eps: float, device: torch.device | None = None, dtype: torch.dtype | None = None) -> None:
         super().__init__()
@@ -8,14 +8,7 @@ class RMSNorm(nn.Module):
         self.eps = eps
         
         self.dtype = dtype if dtype else torch.float32
-        if device:
-            self.device = device
-        elif torch.cuda.is_available():
-            self.device = torch.device("cuda")
-        elif torch.backends.mps.is_available():
-            self.device = torch.device("mps")
-        else:
-            self.device = torch.device("cpu")
+        self.device = get_device(device)
         
         self.gain = nn.Parameter(torch.ones(d_model, device=self.device, dtype=self.dtype))
 

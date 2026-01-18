@@ -47,3 +47,13 @@ TODO
 ### Problem (embedding): Implement the embedding module
 
 `cs336_basics/transformer/embedding.py`
+
+## 3.5 Pre-Norm Transformer Block
+
+### Problem (rmsnorm): Root Mean Square Layer Normalization
+
+`cs336_basics/transformer/rmsnorm.py`
+
+### Problem (positionwise_feedforward): Implement the position-wise feed-forward network
+
+`cs336_basics/transformer/positionwise_feedforward.py`

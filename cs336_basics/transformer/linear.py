@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import math
-
+from .utils import get_device
 class Linear(nn.Module):
     """
     Linear without bias
@@ -10,14 +10,7 @@ class Linear(nn.Module):
         super().__init__()
 
         self.dtype = dtype if dtype else torch.float32
-        if device:
-            self.device = device
-        elif torch.cuda.is_available():
-            self.device = torch.device("cuda")
-        elif torch.backends.mps.is_available():
-            self.device = torch.device("mps")
-        else:
-            self.device = torch.device("cpu")
+        self.device = get_device(device)
         self.weight = nn.Parameter(torch.empty(out_features, in_features, device=self.device, dtype=self.dtype))
 
         sigma = math.sqrt(2.0 / (in_features + out_features))
