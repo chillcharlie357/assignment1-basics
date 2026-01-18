@@ -12,7 +12,17 @@ class Embedding(nn.Module):
         """
         super().__init__()
 
-        self.weight = nn.Parameter(torch.empty(num_embeddings, embedding_dim))
+        self.dtype = dtype if dtype else torch.float32
+        if device:
+            self.device = device
+        elif torch.cuda.is_available():
+            self.device = torch.device("cuda")
+        elif torch.backends.mps.is_available():
+            self.device = torch.device("mps")
+        else:
+            self.device = torch.device("cpu")
+        
+        self.weight = nn.Parameter(torch.empty(num_embeddings, embedding_dim, device=self.device, dtype=self.dtype))
 
         nn.init.trunc_normal_(
             self.weight,
@@ -27,5 +37,5 @@ class Embedding(nn.Module):
         """
         token_ids : (batch_size, sequence_length)
         """
-        idx = token_ids.long() # 使用long tensor index
+        idx = token_ids.long().to(self.device) # 使用long tensor index
         return self.weight[idx]
