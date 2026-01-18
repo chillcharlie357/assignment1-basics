@@ -32,7 +32,7 @@ def run_linear(
     linear = Linear(in_features=d_in, out_features=d_out)
     state_dict = {"weight": weights}
     linear.load_state_dict(state_dict)
-    
+
     return linear.forward(in_features)
 
 
@@ -55,7 +55,11 @@ def run_embedding(
         Float[Tensor, "... d_model"]: Batch of embeddings returned by your Embedding layer.
     """
 
-    raise NotImplementedError
+    from cs336_basics.transformer.embedding import Embedding
+    embedding = Embedding(vocab_size,d_model)
+    
+    embedding.load_state_dict(state_dict={'weight': weights})
+    return embedding.forward(token_ids)
 
 
 def run_swiglu(
