@@ -35,3 +35,10 @@ TODO
 - uint8 (0 ~ 255): 太小，无法容纳所有 Token ID。
 - uint16 (0 ~ 65,535) : 正好可以容纳 12,800 个 ID，且还有很大余量。
 - uint32 / int32 : 每个 ID 占用 4 字节，相比 uint16 浪费了一倍空间。
+
+
+## 3.4 Basic Building Blocks: Linear and Embedding Modules
+
+### Problem (linear): Implementing the linear module
+
+`cs336_basics/transformer/linear.py`
