@@ -56,4 +56,8 @@ TODO
 
 ### Problem (positionwise_feedforward): Implement the position-wise feed-forward network
 
-`cs336_basics/transformer/positionwise_feedforward.py`
+`cs336_basics/transformer/ffn.py`
+
+### Problem (rope): Implement RoPE
+
+`cs336_basics/transformer/rope.py`

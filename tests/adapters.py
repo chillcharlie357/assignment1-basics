@@ -91,7 +91,7 @@ def run_swiglu(
     # swiglu.w1.weight.data = w1_weight
     # swiglu.w2.weight.data = w2_weight
     # swiglu.w3.weight.data = w3_weight
-    from cs336_basics.transformer.positionwise_feedforward import SwiGLU
+    from cs336_basics.transformer.ffn import SwiGLU
     swiglu = SwiGLU(d_model)
     swiglu.load_state_dict({
         "w1": w1_weight,
@@ -215,7 +215,9 @@ def run_rope(
     Returns:
         Float[Tensor, " ... sequence_length d_k"]: Tensor with RoPEd input.
     """
-    raise NotImplementedError
+    from cs336_basics.transformer.rope import RotaryPositionalEmbedding
+    rope = RotaryPositionalEmbedding(theta, d_k, max_seq_len)
+    return rope.forward(in_query_or_key, token_positions)
 
 
 def run_transformer_block(
