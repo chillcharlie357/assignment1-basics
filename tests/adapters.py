@@ -4,6 +4,7 @@ import os
 from collections.abc import Iterable
 from typing import IO, Any, BinaryIO
 
+from einops import einsum
 import numpy.typing as npt
 import torch
 from jaxtyping import Bool, Float, Int
@@ -154,7 +155,21 @@ def run_multihead_self_attention(
         Float[Tensor, " ... sequence_length d_out"]: Tensor with the output of running your optimized, batched multi-headed attention
         implementation with the given QKV projection weights and input features.
     """
-    raise NotImplementedError
+    from cs336_basics.transformer.attention import MultiheadSelfAttention
+    mha = MultiheadSelfAttention(d_model, num_heads)
+    # 结果形状: (3 * d_k, d_in)
+    w_qkv = torch.cat([q_proj_weight, k_proj_weight, v_proj_weight], dim=0)
+    mha.load_state_dict({
+        "w_qkv": w_qkv,
+        "w_o": o_proj_weight,
+    })
+    
+    # causal mask，矩阵下三角
+    # 确保在计算注意力时，每个位置只能关注之前的位置，不能关注之后的位置
+    seq_len = in_features.shape[-2]
+    mask = torch.tril(torch.ones(seq_len, seq_len, device=mha.device)).bool()
+    
+    return mha.forward(in_features, mask=mask)
 
 
 def run_multihead_self_attention_with_rope(
