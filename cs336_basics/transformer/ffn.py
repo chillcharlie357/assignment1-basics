@@ -2,7 +2,7 @@ from torch import nn
 import torch
 from einops import einsum, rearrange
 from .utils import get_device
-
+from .linear import Linear
 class SwiGLU(nn.Module):
     def __init__(self, d_model: int, device: torch.device | None = None, dtype: torch.dtype | None = None) -> None:
         """
