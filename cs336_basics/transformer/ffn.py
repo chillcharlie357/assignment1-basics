@@ -23,10 +23,13 @@ class SwiGLU(nn.Module):
         aligned_dff = (initial_dff // alignment) * alignment
         self.d_ff = aligned_dff if aligned_dff > 0 else alignment
         # w1, w3 (d_ff, d_model)
-        self.w1 = nn.Parameter(torch.ones(self.d_ff, self.d_model, device=self.device, dtype=self.dtype))
-        self.w3 = nn.Parameter(torch.ones(self.d_ff, self.d_model, device=self.device, dtype=self.dtype))
+        # self.w1 = nn.Parameter(torch.ones(self.d_ff, self.d_model, device=self.device, dtype=self.dtype))
+        # self.w3 = nn.Parameter(torch.ones(self.d_ff, self.d_model, device=self.device, dtype=self.dtype))
+        self.w1 = Linear(self.d_model, self.d_ff, self.device, self.dtype)
+        self.w3 = Linear(self.d_model, self.d_ff, self.device, self.dtype)
         # w2 (d_model, d_ff)
-        self.w2 = nn.Parameter(torch.ones(self.d_model, self.d_ff, device=self.device, dtype=self.dtype)) 
+        # self.w2 = nn.Parameter(torch.ones(self.d_model, self.d_ff, device=self.device, dtype=self.dtype)) 
+        self.w2 = Linear(self.d_ff, self.d_model,self.device, self.dtype)
 
     def _silu(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -38,20 +41,23 @@ class SwiGLU(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x =  x.to(self.device)
 
-        part1 = einsum(
-            x, self.w1,
-            " ... d_model, d_ff d_model -> ... d_ff"
-        )
-        part2 = einsum(
-            x, self.w3,
-            "... d_model, d_ff d_model -> ... d_ff"
-        )
+        # part1 = einsum(
+        #     x, self.w1,
+        #     " ... d_model, d_ff d_model -> ... d_ff"
+        # )
+        # part2 = einsum(
+        #     x, self.w3,
+        #     "... d_model, d_ff d_model -> ... d_ff"
+        # )
+        part1 = self.w1.forward(x)
+        part2 = self.w3.forward(x)
         
         inner = self._silu(part1) * part2
         
-        output = einsum(
-            inner, self.w2,
-            "... d_ff, d_model d_ff -> ... d_model"
-        )
+        # output = einsum(
+        #     inner, self.w2,
+        #     "... d_ff, d_model d_ff -> ... d_model"
+        # )
+        output = self.w2.forward(inner)
         
         return output
