@@ -3,7 +3,7 @@ import torch
 from .utils import get_device
 from einops import einsum, rearrange, repeat
 
-class RotaryPositionalEmbedding(nn.Module):
+class RoPE(nn.Module):
     def __init__(self, theta: float, d_k: int, max_seq_len: int, device: torch.device | None = None) -> None:
         """
         theta: float Θ value for the RoPE

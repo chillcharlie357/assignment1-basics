@@ -1,10 +1,12 @@
 from math import inf
+from typing import override, Any
+from collections.abc import Mapping
 import torch
 from jaxtyping import Float, Bool
 from einops import einsum, rearrange
 from .softmax import softmax
 from torch import nn
-from .rope import RotaryPositionalEmbedding
+from .rope import RoPE
 from .utils import get_device
 from .linear import Linear
 from cs336_basics.log import logger
@@ -49,9 +51,11 @@ class MultiheadSelfAttention(nn.Module):
         self.dtype = dtype if dtype else torch.float32
 
         # qkv合成一个矩阵
-        self.w_qkv = nn.Parameter(torch.randn(d_model * 3, d_model, dtype=self.dtype).to(self.device)) #(d_out, d_in)
-        self.w_o = nn.Parameter(torch.randn(d_model, d_model, dtype=self.dtype).to(self.device))
-
+        # self.w_qkv = nn.Parameter(torch.randn(d_model * 3, d_model, dtype=self.dtype).to(self.device)) #(d_out, d_in)
+        # self.w_o = nn.Parameter(torch.randn(d_model, d_model, dtype=self.dtype).to(self.device))
+        self.w_qkv = Linear(d_model, d_model * 3, device=self.device, dtype=self.dtype)
+        self.w_o = Linear(d_model, d_model, device=self.device, dtype=self.dtype)
+    
     def forward(
             self, 
             x: Float[torch.Tensor, "... seq_len d_model"], 
@@ -60,12 +64,7 @@ class MultiheadSelfAttention(nn.Module):
         x = x.to(self.device)
         logger.info(f"MHA input shape: {x.shape}")
 
-        qkv_projection =  einsum(
-            x, 
-            self.w_qkv,
-            "... seq_len d_model, d_model_3 d_model -> ... seq_len d_model_3",
-        )
-        # qkv_projection = x @ self.w_qkv.T
+        qkv_projection = self.w_qkv.forward(x)
         logger.info(f"MHA qkv projection shape: {qkv_projection.shape}")
 
         # 拆开q, k, v得到[... num_heads seq_len d_model]
@@ -104,7 +103,7 @@ class MultiheadSelfAttention(nn.Module):
         logger.info(f"MHA values rearrange shape: {values_after_attention.shape}")
 
 
-        output = values_after_attention @ self.w_o.T
+        output = self.w_o.forward(values_after_attention)
         logger.info(f"MHA output shape: {output.shape}")
 
         return output

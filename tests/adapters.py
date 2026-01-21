@@ -159,9 +159,11 @@ def run_multihead_self_attention(
     mha = MultiheadSelfAttention(d_model, num_heads)
     # 结果形状: (3 * d_k, d_in)
     w_qkv = torch.cat([q_proj_weight, k_proj_weight, v_proj_weight], dim=0)
-    mha.load_state_dict({
-        "w_qkv": w_qkv,
-        "w_o": o_proj_weight,
+    mha.w_qkv.load_state_dict({
+        "weight": w_qkv
+    })
+    mha.w_o.load_state_dict({
+        "weight": o_proj_weight
     })
     
     # causal mask，矩阵下三角
@@ -231,8 +233,8 @@ def run_rope(
     Returns:
         Float[Tensor, " ... sequence_length d_k"]: Tensor with RoPEd input.
     """
-    from cs336_basics.transformer.rope import RotaryPositionalEmbedding
-    rope = RotaryPositionalEmbedding(theta, d_k, max_seq_len)
+    from cs336_basics.transformer.rope import RoPE
+    rope = RoPE(theta, d_k, max_seq_len)
     return rope.forward(in_query_or_key, token_positions)
 
 
