@@ -10,6 +10,8 @@ import torch
 from jaxtyping import Bool, Float, Int
 from torch import Tensor
 
+from cs336_basics.log import logger
+
 
 def run_linear(
     d_in: int,
@@ -93,7 +95,7 @@ def run_swiglu(
     # swiglu.w2.weight.data = w2_weight
     # swiglu.w3.weight.data = w3_weight
     from cs336_basics.transformer.ffn import SwiGLU
-    swiglu = SwiGLU(d_model)
+    swiglu = SwiGLU(d_model, d_ff)
     swiglu.w1.load_state_dict({"weight": w1_weight})
     swiglu.w2.load_state_dict({"weight": w2_weight})
     swiglu.w3.load_state_dict({"weight": w3_weight})
@@ -321,8 +323,26 @@ def run_transformer_block(
         Float[Tensor, "batch sequence_length d_model"] Tensor with the output of
         running the Transformer block on the input features while using RoPE.
     """
-    raise NotImplementedError
+    from cs336_basics.transformer.transformer import TransformerBlock
 
+    block = TransformerBlock(d_model, num_heads, d_ff, max_seq_len, theta)
+    
+    # (3 * d_k, d_in)
+    w_qkv = torch.concat([weights["attn.q_proj.weight"], weights["attn.k_proj.weight"], weights["attn.v_proj.weight"]], dim=0)
+    block.attn.load_state_dict({
+        "w_qkv.weight": w_qkv,
+    },strict=False)
+
+    block.attn.w_o.load_state_dict({"weight": weights["attn.output_proj.weight"]})
+    block.ln1.load_state_dict({"gain": weights["ln1.weight"]})
+    
+    # FFN weights
+    block.ffn.w1.load_state_dict({"weight": weights["ffn.w1.weight"]})
+    block.ffn.w2.load_state_dict({"weight": weights["ffn.w2.weight"]})
+    block.ffn.w3.load_state_dict({"weight": weights["ffn.w3.weight"]})
+    block.ln2.load_state_dict({"gain": weights["ln2.weight"]})
+
+    return block.forward(in_features)
 
 def run_transformer_lm(
     vocab_size: int,

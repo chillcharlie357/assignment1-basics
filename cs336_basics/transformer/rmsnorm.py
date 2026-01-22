@@ -2,7 +2,7 @@ from torch import nn
 import torch
 from .utils import get_device
 class RMSNorm(nn.Module):
-    def __init__(self, d_model: int, eps: float, device: torch.device | None = None, dtype: torch.dtype | None = None) -> None:
+    def __init__(self, d_model: int, eps: float = 1e-5, device: torch.device | None = None, dtype: torch.dtype | None = None) -> None:
         super().__init__()
         self.d_model = d_model
         self.eps = eps
