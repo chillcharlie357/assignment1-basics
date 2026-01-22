@@ -423,7 +423,20 @@ def run_transformer_lm(
         Float[Tensor, "batch_size sequence_length vocab_size"]: Tensor with the predicted unnormalized
         next-word distribution for each token.
     """
-    raise NotImplementedError
+    from cs336_basics.transformer.lm import Transformer_LM
+
+    lm = Transformer_LM(
+        vocab_size,
+        num_layers,
+        d_model,
+        num_heads,
+        d_ff,
+        max_seq_len=context_length,
+        theta=rope_theta
+    )
+
+    lm.load_state_dict(weights)
+    return lm.forward(in_indices)
 
 
 def run_rmsnorm(

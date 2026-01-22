@@ -1,6 +1,9 @@
 from torch import nn
 import torch
 from .utils import get_device
+from typing import Any, override
+from collections.abc import Mapping
+
 class RMSNorm(nn.Module):
     def __init__(self, d_model: int, eps: float = 1e-5, device: torch.device | None = None, dtype: torch.dtype | None = None) -> None:
         super().__init__()
@@ -26,6 +29,11 @@ class RMSNorm(nn.Module):
         result = (x  / self._rms(x)) * self.gain
 
         return result.to(in_dtype)
+
+    @override
+    def load_state_dict(self, state_dict: Mapping[str, Any], strict: bool = True, assign: bool = False):
+        if "weight" in state_dict:
+             self.gain.data.copy_(state_dict["weight"])
 
         
 

@@ -1,6 +1,8 @@
+from jaxtyping import Float
 from sympy import tensor
 import torch.nn as nn
 import torch
+
 from .utils import get_device
 class Embedding(nn.Module):
     def __init__(self, num_embeddings: int, embedding_dim: int, device: torch.device | None = None, dtype : torch.dtype | None = None) -> None:
@@ -26,7 +28,7 @@ class Embedding(nn.Module):
         )
     
 
-    def forward(self, token_ids: torch.Tensor) -> torch.Tensor:
+    def forward(self, token_ids: Float[torch.Tensor, "batch_size seq_len"]) -> Float[torch.Tensor, "batch_size seq_len d_model"]:
         """
         token_ids : (batch_size, sequence_length)
         """
