@@ -1,10 +1,10 @@
 import string
-from jaxtyping import Float
 from numpy import  ndarray
 from torch import Tensor
 import torch
+from jaxtyping import Float
 
-def get_batch(dataset: ndarray, batch_size: int, seq_len: int, device: string) -> (Float[Tensor, "batch_size seq_len"], Float[Tensor, "batch_size seq_len"]):
+def get_batch(dataset: ndarray, batch_size: int, seq_len: int, device: string) -> tuple[Float[Tensor, "batch_size seq_len"], Float[Tensor, "batch_size seq_len"]]:
     """
     Get a batch of data from the inputs array.
 
@@ -17,8 +17,7 @@ def get_batch(dataset: ndarray, batch_size: int, seq_len: int, device: string) -
     Returns:
         (Float[Tensor, "batch_size seq_len"], Float[Tensor, "batch_size seq_len"]): The input and target tensors.
     """
-
-    dataset_tensor = torch.from_numpy(dataset)
+    
     dataset_len = dataset.shape[0]
 
     # (batch_size,)
@@ -30,7 +29,11 @@ def get_batch(dataset: ndarray, batch_size: int, seq_len: int, device: string) -
     # (batch_size, seq_len)
     batch_indices = indices.unsqueeze(1) + offsets.unsqueeze(0)
     
-    batch_input = dataset_tensor[batch_indices].to(device)
-    batch_target = dataset_tensor[batch_indices + 1].to(device)
+    # Convert to numpy for slicing to support np.memmap without warnings/issues
+    # PyTorch does not support non-writable tensors (like read-only memmap) well
+    batch_indices_np = batch_indices.numpy()
+    
+    batch_input: Tensor = torch.from_numpy(dataset[batch_indices_np]).to(device)
+    batch_target: Tensor = torch.from_numpy(dataset[batch_indices_np + 1]).to(device)
 
     return (batch_input, batch_target)

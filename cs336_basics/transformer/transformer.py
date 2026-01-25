@@ -12,7 +12,7 @@ from .attention import MultiheadSelfAttention as MHA
 from .utils import get_device
 
 class TransformerBlock(nn.Module):
-    def __init__(self, d_model: int, num_heads: int, d_ff: int, max_seq_len: int, theta: int) -> None:
+    def __init__(self, d_model: int, num_heads: int, d_ff: int, max_seq_len: int, theta: float = 10000.0) -> None:
         """
         d_model: int Dimensionality of the Transformer block inputs.
         num_heads: int Number of heads to use in multi-head self-attention.

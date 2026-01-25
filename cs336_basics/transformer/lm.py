@@ -22,7 +22,7 @@ class Transformer_LM(nn.Module):
         num_heads: int,
         d_ff: int,
         max_seq_len: int,
-        theta: int,
+        theta: float = 10000.0,
     ) -> None:
         """
         vocab_size: int The size of the vocabulary, necessary for determining the dimensionality of the token embedding matrix.

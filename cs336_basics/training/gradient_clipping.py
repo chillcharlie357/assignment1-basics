@@ -19,7 +19,9 @@ def gradient_clipping(parameters: Iterable[torch.nn.Parameter], max_l2_norm: flo
 
     # Compute the total L2 norm of all gradients
     device: torch.device = grads[0].device
-    total_norm: Tensor = torch.linalg.norm(torch.stack([torch.linalg.norm(g.detach(), ord=2.0).to(device) for g in grads]), ord=2.0)
+    # MPS device may not support torch.linalg.norm with ord=2.0 for all operations
+    # Use torch.norm as a fallback or simpler implementation for better compatibility
+    total_norm: Tensor = torch.norm(torch.stack([torch.norm(g.detach(), p=2.0).to(device) for g in grads]), p=2.0)
     
     # Clip gradients if the total norm exceeds the maximum allowed norm
     if total_norm > max_l2_norm:

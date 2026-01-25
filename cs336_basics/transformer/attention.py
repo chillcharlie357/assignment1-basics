@@ -57,7 +57,7 @@ class MultiheadSelfAttention(nn.Module):
         # d_k = d_v = d_model // num_heads
         self.head_dim = d_model // num_heads
 
-        logger.info(f"MHA d_model: {d_model}, num_heads: {num_heads}, head_dim: {self.head_dim}")
+        logger.debug(f"MHA d_model: {d_model}, num_heads: {num_heads}, head_dim: {self.head_dim}")
 
         self.device = get_device(device)
         self.dtype = dtype if dtype else torch.float32
@@ -71,7 +71,7 @@ class MultiheadSelfAttention(nn.Module):
         # Initialize RoPE if max_seq_len is provided
         self.rope = None
         if max_seq_len is not None:
-            logger.info("Enbale RoPE")
+            logger.debug("Enbale RoPE")
             self.rope = RoPE(theta, self.head_dim, max_seq_len, device)
 
     def forward(
@@ -81,21 +81,21 @@ class MultiheadSelfAttention(nn.Module):
         token_positions: Int[torch.Tensor, "... seq_len"] | None = None,
     ) -> Float[torch.Tensor, "... seq_len d_model"]:
         x = x.to(self.device)
-        logger.info(f"MHA input shape: {x.shape}")
+        logger.debug(f"MHA input shape: {x.shape}")
 
         qkv_projection = self.w_qkv.forward(x)
-        logger.info(f"MHA qkv projection shape: {qkv_projection.shape}")
+        logger.debug(f"MHA qkv projection shape: {qkv_projection.shape}")
 
         # 拆开q, k, v得到[... num_heads seq_len d_model]
         q, k, v = qkv_projection.chunk(3, dim=-1)
-        logger.info(f"MHA qkv chunk shape: {q.shape}, {k.shape}, {v.shape}")
+        logger.debug(f"MHA qkv chunk shape: {q.shape}, {k.shape}, {v.shape}")
 
         # 拆分head，调整顺序，每个head并行处理
         # head_dim = d_model / num_heads
         q = rearrange(q, "... seq_len (num_heads head_dim) -> ... num_heads seq_len head_dim", num_heads=self.num_heads)
         k = rearrange(k, "... seq_len (num_heads head_dim) -> ... num_heads seq_len head_dim", num_heads=self.num_heads)
         v = rearrange(v, "... seq_len (num_heads head_dim) -> ... num_heads seq_len head_dim", num_heads=self.num_heads)
-        logger.info(f"MHA  q: {q.shape} k: {k.shape} v: {v.shape}")
+        logger.debug(f"MHA  q: {q.shape} k: {k.shape} v: {v.shape}")
 
 
         if self.rope is not None and token_positions is not None:
@@ -106,16 +106,16 @@ class MultiheadSelfAttention(nn.Module):
              k = self.rope.forward(k, token_positions.unsqueeze(1))
 
         values_after_attention = scaled_dot_product_attention(q, k, v, mask)
-        logger.info(f"MHA scaled_dot_product_attention shape: {values_after_attention.shape}")
+        logger.debug(f"MHA scaled_dot_product_attention shape: {values_after_attention.shape}")
 
         # 合并head
         values_after_attention = rearrange(
             values_after_attention,
             "... num_heads seq_len head_dim -> ... seq_len (num_heads head_dim)",
         )
-        logger.info(f"MHA values rearrange shape: {values_after_attention.shape}")
+        logger.debug(f"MHA values rearrange shape: {values_after_attention.shape}")
 
         output = self.w_o.forward(values_after_attention)
-        logger.info(f"MHA output shape: {output.shape}")
+        logger.debug(f"MHA output shape: {output.shape}")
 
         return output
