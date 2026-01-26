@@ -1,0 +1,9 @@
+.venv
+.DS_Store
+__pycache__
+.git
+*.pdf
+.pytest_cache
+logs
+wandb/
+data/checkpoints/

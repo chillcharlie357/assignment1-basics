@@ -435,7 +435,7 @@ def run_transformer_lm(
         theta=rope_theta
     )
 
-    lm.load_state_dict(weights)
+    lm.load_weight(weights)
     return lm.forward(in_indices)
 
 

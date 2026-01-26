@@ -59,8 +59,7 @@ class Transformer_LM(nn.Module):
 
         return logits
 
-    @override
-    def load_state_dict(self, state_dict: Mapping[str, Any], strict: bool = True, assign: bool = False):
+    def load_weight(self, state_dict: Mapping[str, Any], strict: bool = True, assign: bool = False):
         self.token_embeddings.load_state_dict({"weight": state_dict["token_embeddings.weight"]})
 
         for i, layer in enumerate(self.layers):
