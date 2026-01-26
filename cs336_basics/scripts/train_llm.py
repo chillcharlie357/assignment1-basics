@@ -59,7 +59,13 @@ vocab_size = tokenizer.vocab_size
 # Limit dataset size for faster iteration/debugging
 # Use a smaller subset if needed, e.g., first 1000 batches
 dataset_len = numpy_dataset.shape[0]
-steps_per_epoch = dataset_len // (batch_size * max_seq_len)
+steps_per_epoch = None
+if device == torch.device("cuda"):
+    steps_per_epoch = dataset_len // (batch_size * max_seq_len)
+else:
+    # cpu和mps, 训练速度较慢, 所以只训练100步
+    steps_per_epoch = 100
+
 
 model = Transformer_LM(
     vocab_size,

@@ -13,11 +13,12 @@ def save_checkpoint(model: nn.Module, optimizer: optim.Optimizer, iteration: int
     torch.save(states, out)
 
 
-def load_checkpoint(src: str | os.PathLike | typing.BinaryIO | typing.IO[bytes], model: nn.Module, optimizer: optim.Optimizer) -> int:
+def load_checkpoint(src: str | os.PathLike | typing.BinaryIO | typing.IO[bytes], model: nn.Module, optimizer: optim.Optimizer | None = None) -> int:
     states = torch.load(src)
 
     iter = int(states['iter'])
     model.load_state_dict(states['model'])
-    optimizer.load_state_dict(states['optimizer'])
+    if optimizer is not None:
+        optimizer.load_state_dict(states['optimizer'])
 
     return iter

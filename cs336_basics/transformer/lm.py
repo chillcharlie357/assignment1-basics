@@ -86,3 +86,69 @@ class Transformer_LM(nn.Module):
         
         self.ln_final.load_state_dict({"weight": state_dict["ln_final.weight"]})
         self.lm_head.load_state_dict({"weight": state_dict["lm_head.weight"]})
+
+    def top_p_sampling(self, logits: torch.Tensor, top_p: float = 0.9, temperature: float = 1.0) -> torch.Tensor:
+        # logits: (batch_size, vocab_size)
+        
+        # 在softmax之前应用 temperature
+        if temperature != 1.0 and temperature > 0:
+            logits = logits / temperature
+        
+        # 对 logits 进行排序, 并计算概率分布
+        sorted_logits, sorted_indices = torch.sort(logits, descending=True, dim=-1)
+        sorted_probs = softmax(sorted_logits, dim=-1)
+        
+        # 计算累积概率, 从最高概率开始累加
+        cumulative_probs = torch.cumsum(sorted_probs, dim=-1)
+        
+        # 移除累积概率超过阈值的 tokens，得到掩码
+        # [False, False, ..., True, True]
+        sorted_indices_to_remove = cumulative_probs > top_p
+        
+        # 将索引向右移动，保留第一个超过阈值的 token
+        sorted_indices_to_remove[..., 1:] = sorted_indices_to_remove[..., :-1].clone()
+        sorted_indices_to_remove[..., 0] = 0 # 保留最高概率的 token
+        
+        # 将排序后的索引映射回原始索引
+        indices_to_remove = sorted_indices_to_remove.scatter(dim=-1, index=sorted_indices, src=sorted_indices_to_remove)
+        
+        logits[indices_to_remove] = float('-inf')
+        
+        # 从过滤后的分布中采样
+        probs = softmax(logits, dim=-1)
+        # 从过滤后的分布中随机采样
+        next_token = torch.multinomial(probs, num_samples=1)
+        
+        return next_token
+
+    def generate(
+        self,
+        input_ids: torch.Tensor,
+        max_new_tokens: int,
+        max_seq_len: int,
+        temperature: float = 1.0,
+        top_p: float = 0.9,
+        eos_token_id: int | None = None,
+    ) -> torch.Tensor:
+        self.eval()
+        curr_input = input_ids
+        
+        with torch.no_grad():
+            for _ in range(max_new_tokens):
+                if curr_input.shape[1] >= max_seq_len:
+                    break
+
+                logits = self.forward(curr_input)
+                next_token_logits = logits[:, -1, :]
+                
+                if temperature > 0:
+                    next_token = self.top_p_sampling(next_token_logits, top_p, temperature)
+                else:
+                    next_token = torch.argmax(next_token_logits, dim=-1, keepdim=True)
+                
+                curr_input = torch.cat([curr_input, next_token], dim=1)
+                
+                if eos_token_id is not None and next_token.item() == eos_token_id:
+                    break
+                    
+        return curr_input
