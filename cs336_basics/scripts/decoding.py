@@ -42,7 +42,7 @@ def decode(model: Transformer_LM, tokenizer: Tokenizer, max_seq_len: int, device
 
 
 if __name__ == "__main__":
-    dataset_path = "data/tokenids/tokenids.npy"
+    dataset_path = "data/tokenids/TinyStoriesV2-GPT4-train_tokenids.npy"
     batch_size = 256
     max_seq_len = 128
     num_layers = 2
@@ -53,8 +53,8 @@ if __name__ == "__main__":
     device = get_device()
 
     # Tokenizer
-    vocab_path = "data/vocab/tinystories_sample_5M_vocab.pkl"
-    merges_path = "data/vocab/tinystories_sample_5M_merges.pkl"
+    vocab_path = "data/vocab/TinyStoriesV2-GPT4-train_vocab.pkl"
+    merges_path = "data/vocab/TinyStoriesV2-GPT4-train_merges.pkl"
     special_tokens = ["<|endoftext|>"]
     tokenizer = Tokenizer.from_files(vocab_path, merges_path, special_tokens)
     vocab_size = tokenizer.vocab_size
@@ -69,6 +69,12 @@ if __name__ == "__main__":
         d_ff=d_ff,
     )
 
-    load_checkpoint(f"data/checkpoints/checkpoint_{device}.pt", model)
+    try:
+        load_checkpoint(f"data/checkpoints/checkpoint_{device}.pt", model)
+    except FileNotFoundError:
+        print("No checkpoint found, starting from scratch")
+    except Exception as e:
+        print(f"Error loading checkpoint: {e}")
+        raise e
 
     decode(model, tokenizer, max_seq_len, device)

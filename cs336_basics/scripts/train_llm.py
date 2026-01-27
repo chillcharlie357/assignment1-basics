@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 epochs = 1
 learning_rate = 5e-4
-dataset_path = "data/tokenids/tokenids.npy"
+dataset_path = "data/tokenids/TinyStoriesV2-GPT4-train_tokenids.npy"
 batch_size = 256
 max_seq_len = 128
 num_layers = 2
@@ -49,8 +49,8 @@ device = get_device()
 logger.info(f"Device: {device}")
 
 # Tokenizer
-vocab_path = "data/vocab/tinystories_sample_5M_vocab.pkl"
-merges_path = "data/vocab/tinystories_sample_5M_merges.pkl"
+vocab_path = "data/vocab/TinyStoriesV2-GPT4-train_vocab.pkl"
+merges_path = "data/vocab/TinyStoriesV2-GPT4-train_merges.pkl"
 special_tokens = ["<|endoftext|>"]
 tokenizer = Tokenizer.from_files(vocab_path, merges_path, special_tokens)
 vocab_size = tokenizer.vocab_size
@@ -95,6 +95,8 @@ try:
     print(f"Resuming from iteration {iteration} (Epoch {start_epoch}, Iter {start_iter})")
 except FileNotFoundError:
     print("No checkpoint found, starting from scratch")
+except Exception as e:
+    print(f"Error loading checkpoint: {e}")
 
 total_steps = epochs * steps_per_epoch
 initial_steps = start_epoch * steps_per_epoch + start_iter

@@ -1,5 +1,4 @@
 from cs336_basics.tokenizer.tokenizer import Tokenizer
-from cs336_basics.config import config
 from cs336_basics.pretokenization_example import find_chunk_boundaries
 from tqdm import tqdm
 import numpy as np
@@ -21,11 +20,11 @@ class FileChunkIterable:
 
 if __name__ == "__main__":
     
-    vocab_path = config.tokenizer.data.vocab_path
-    merges_path = config.tokenizer.data.merges_path
-    special_tokens = config.tokenizer.training.special_tokens
-    input_file = config.tokenizer.data.input_path
-    tokenIDs_path = "data/tokenids/"
+    vocab_path = "data/vocab/TinyStoriesV2-GPT4-train_vocab.pkl"
+    merges_path = "data/vocab/TinyStoriesV2-GPT4-train_merges.pkl"
+    special_tokens = ["<|endoftext|>"]
+    input_file = "data/TinyStoriesV2-GPT4-train.txt"
+    tokenIDs_path = "data/tokenids/TinyStoriesV2-GPT4-train_tokenids.npy"
 
     tokenizer = Tokenizer.from_files(vocab_filepath=vocab_path, 
                             merges_filepath=merges_path, 
@@ -39,7 +38,7 @@ if __name__ == "__main__":
     # Serialize token IDs as a NumPy array of datatype uint16
     ids_array = np.fromiter(ids, dtype=np.uint16)
     np.save(tokenIDs_path, ids_array)
-    print(f"Token IDs saved to {tokenIDs_path}.npy")
+    print(f"Token IDs saved to {tokenIDs_path}")
     
 
 

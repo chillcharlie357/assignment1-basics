@@ -7,3 +7,4 @@ __pycache__
 logs
 wandb/
 data/checkpoints/
+data/
