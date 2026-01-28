@@ -1,0 +1,5 @@
+num_layers: 2
+num_heads: 4
+d_model: 128
+d_ff: 512
+max_seq_len: 128

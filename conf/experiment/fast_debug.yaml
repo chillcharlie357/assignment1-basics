@@ -1,0 +1,23 @@
+# @package _global_
+# 表示这个文件里的配置会应用到全局根节点
+
+
+# 这是一个实验配置示例
+# 使用方法: python cs336_basics/scripts/train_llm.py +experiment=fast_debug
+
+# 覆盖各个模块的参数
+training:
+  epochs: 1
+  batch_size: 4
+  learning_rate: 1e-3
+
+model:
+  num_layers: 2
+  d_model: 64
+
+dataset:
+  # 使用较小的数据集路径或者其他设置
+  dataset_path: "tests/fixtures/tinystories_100.bin"
+
+logging:
+  name: "fast_debug_run"

@@ -136,13 +136,12 @@ def train_bpe(input_path: str, vocab_size: int, special_tokens: list[str]):
 
 
 if __name__ == "__main__":
-    from cs336_basics.config import config
     
-    special_tokens = config.tokenizer.training.special_tokens
-    input_file = config.tokenizer.data.input_path
-    vocab_file = config.tokenizer.data.vocab_path
-    merges_file = config.tokenizer.data.merges_path
-    vocab_size = config.tokenizer.training.vocab_size
+    special_tokens = ["<|endoftext|>"]
+    input_file = "data/TinyStoriesV2-GPT4-train.txt"
+    vocab_file = "data/vocab/TinyStoriesV2-GPT4-train_vocab.pkl"
+    merges_file = "data/vocab/TinyStoriesV2-GPT4-train_merges.pkl"
+    vocab_size = 10000
         
     if os.path.exists(input_file):
         vocab, merges = train_bpe(input_file, vocab_size, special_tokens)

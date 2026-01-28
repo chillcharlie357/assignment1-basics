@@ -1,0 +1,4 @@
+epochs: 1
+learning_rate: 5e-4
+batch_size: 256
+max_norm: 1e-2

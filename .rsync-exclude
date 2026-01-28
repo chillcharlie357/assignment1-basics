@@ -8,3 +8,6 @@ logs
 wandb/
 data/checkpoints/
 data/
+/tests/_snapshots/
+.vscode/
+logs/

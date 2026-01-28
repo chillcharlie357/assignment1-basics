@@ -1,0 +1,12 @@
+defaults:
+  - model: small
+  - dataset: tinystories
+  - training: default
+  - logging: default
+  - tokenizer: default
+  - experiment: null
+  - _self_
+
+hydra:
+  run:
+    dir: logs/${now:%Y-%m-%d}/${now:%H-%M-%S}

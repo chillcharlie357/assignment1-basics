@@ -1,0 +1,6 @@
+name: "cs336"
+level: "INFO"
+rich:
+  show_path: true
+  rich_tracebacks: true
+  markup: true

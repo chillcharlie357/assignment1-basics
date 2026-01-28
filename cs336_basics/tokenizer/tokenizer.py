@@ -151,28 +151,3 @@ class Tokenizer:
 #     openWebText_path = "data/owt_train.txt"
 
     
-
-def _local_test():
-    try:
-        from cs336_basics.config import config
-        
-        vocab_path = config.tokenizer.data.vocab_path
-        merges_path = config.tokenizer.data.merges_path
-        special_tokens = config.tokenizer.training.special_tokens
-
-        tokenizer = Tokenizer.from_files(vocab_filepath=vocab_path, 
-                            merges_filepath=merges_path, 
-                            special_tokens=special_tokens)
-        logger.debug("load tokenizer from config")
-        tokens = tokenizer.encode("Héllò hôw <|endoftext|><|endoftext|> are ü? 🙃<|endoftext|>")
-        logger.debug(f"encode :{tokens}")
-
-        decoded_str = tokenizer.decode(tokens)
-
-        logger.debug(f"decode: {decoded_str}")
-    except Exception as e:
-        logger.warning(f"Failed to load tokenizer from config: {e}. Falling back to manual paths.")
-
-
-if __name__ == "__main__":
-    _local_test()
