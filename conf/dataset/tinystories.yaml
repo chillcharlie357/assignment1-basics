@@ -1,1 +1,2 @@
 dataset_path: "data/tokenids/TinyStoriesV2-GPT4-train_tokenids.npy"
+valid_dataset_path: "data/tokenids/TinyStoriesV2-GPT4-valid_tokenids.npy"

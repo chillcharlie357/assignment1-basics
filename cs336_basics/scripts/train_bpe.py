@@ -186,28 +186,31 @@ def train_bpe(input_path: str, vocab_size: int, special_tokens: list[str]):
 
 
 if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description="Train BPE tokenizer")
+    parser.add_argument("--input_path", type=str, required=True, help="Path to input text file")
+    parser.add_argument("--vocab_path", type=str, required=True, help="Path to save vocab pkl")
+    parser.add_argument("--merges_path", type=str, required=True, help="Path to save merges pkl")
+    parser.add_argument("--vocab_size", type=int, default=10000, help="Target vocabulary size")
+    parser.add_argument("--special_tokens", nargs="+", default=["<|endoftext|>"], help="List of special tokens")
     
-    special_tokens = ["<|endoftext|>"]
-    input_file = "data/owt_train.txt"
-    vocab_file = "data/vocab/owt_train_vocab.pkl"
-    merges_file = "data/vocab/owt_train_merges.pkl"
-    vocab_size = 10000
-        
-    if os.path.exists(input_file):
-        vocab, merges = train_bpe(input_file, vocab_size, special_tokens)
+    args = parser.parse_args()
+    
+    if os.path.exists(args.input_path):
+        vocab, merges = train_bpe(args.input_path, args.vocab_size, args.special_tokens)
         logger.info("finish train bpe")
         import pickle
         
         # 确保输出目录存在
-        os.makedirs(os.path.dirname(vocab_file), exist_ok=True)
-        os.makedirs(os.path.dirname(merges_file), exist_ok=True)
+        os.makedirs(os.path.dirname(args.vocab_path), exist_ok=True)
+        os.makedirs(os.path.dirname(args.merges_path), exist_ok=True)
         
-        with open(vocab_file, "wb") as f:
+        with open(args.vocab_path, "wb") as f:
             pickle.dump(vocab, f)
-            logger.info(f"save vocab to {vocab_file}")
-        with open(merges_file, "wb") as f:
+            logger.info(f"save vocab to {args.vocab_path}")
+        with open(args.merges_path, "wb") as f:
             pickle.dump(merges, f)
-            logger.info(f"save merges to {merges_file}")
+            logger.info(f"save merges to {args.merges_path}")
             
     else:
-        logger.error(f"Error: Could not find input file at {input_file}")
+        logger.error(f"Error: Could not find input file at {args.input_path}")
