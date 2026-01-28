@@ -1,4 +1,1 @@
 dataset_path: "data/tokenids/TinyStoriesV2-GPT4-train_tokenids.npy"
-vocab_path: "data/vocab/TinyStoriesV2-GPT4-train_vocab.pkl"
-merges_path: "data/vocab/TinyStoriesV2-GPT4-train_merges.pkl"
-special_tokens: ["<|endoftext|>"]

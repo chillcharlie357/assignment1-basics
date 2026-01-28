@@ -58,9 +58,9 @@ def main(cfg: DictConfig):
     d_ff = cfg.model.d_ff
     
     # Tokenizer
-    vocab_path = hydra.utils.to_absolute_path(cfg.data.vocab_path)
-    merges_path = hydra.utils.to_absolute_path(cfg.data.merges_path)
-    special_tokens = list(cfg.data.special_tokens)
+    vocab_path = hydra.utils.to_absolute_path(cfg.tokenizer.vocab_path)
+    merges_path = hydra.utils.to_absolute_path(cfg.tokenizer.merges_path)
+    special_tokens = list(cfg.tokenizer.special_tokens)
     tokenizer = Tokenizer.from_files(vocab_path, merges_path, special_tokens)
     vocab_size = tokenizer.vocab_size
 

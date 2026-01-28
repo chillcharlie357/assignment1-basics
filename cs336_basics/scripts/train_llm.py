@@ -11,6 +11,7 @@ import random
 import os
 import wandb
 from tqdm import tqdm
+import datetime
 
 @hydra.main(version_base=None, config_path="../../conf", config_name="config")
 def main(cfg: DictConfig):
@@ -29,9 +30,9 @@ def main(cfg: DictConfig):
     d_ff = cfg.model.d_ff
     
     # Paths (convert to absolute because Hydra changes cwd)
-    dataset_path = hydra.utils.to_absolute_path(cfg.data.dataset_path)
-    vocab_path = hydra.utils.to_absolute_path(cfg.data.vocab_path)
-    merges_path = hydra.utils.to_absolute_path(cfg.data.merges_path)
+    dataset_path = hydra.utils.to_absolute_path(cfg.dataset.dataset_path)
+    vocab_path = hydra.utils.to_absolute_path(cfg.tokenizer.vocab_path)
+    merges_path = hydra.utils.to_absolute_path(cfg.tokenizer.merges_path)
     
     # Start a new wandb run to track this script.
     run = wandb.init(
@@ -49,7 +50,7 @@ def main(cfg: DictConfig):
     logger.info(f"Device: {device}")
     
     # Tokenizer
-    special_tokens = list(cfg.dataset.special_tokens)
+    special_tokens = list(cfg.tokenizer.special_tokens)
     tokenizer = Tokenizer.from_files(vocab_path, merges_path, special_tokens)
     vocab_size = tokenizer.vocab_size
     
@@ -144,6 +145,11 @@ def main(cfg: DictConfig):
         
         # Reset start_iter after the first resumed epoch is done
         start_iter = 0
+        # save final checkpoint
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        final_checkpoint_path = os.path.join(checkpoint_dir, f"model_{device}_{timestamp}.pt")
+        save_checkpoint(model, optimizer, current_global_step + 1, final_checkpoint_path)
+    
         
     
     

@@ -1,7 +1,9 @@
-data:
-  input_path: "data/TinyStoriesV2-GPT4-train.txt"
-  vocab_path: "data/vocab/tinystories_sample_5M_vocab.pkl"
-  merges_path: "data/vocab/tinystories_sample_5M_merges.pkl"
-training:
-  vocab_size: 12800
-  special_tokens: ["<|endoftext|>"]
+# Tokenizer configuration
+# Used by both dataset loading and tokenizer instantiation
+vocab_path: "data/vocab/TinyStoriesV2-GPT4-train_vocab.pkl"
+merges_path: "data/vocab/TinyStoriesV2-GPT4-train_merges.pkl"
+special_tokens: ["<|endoftext|>"]
+
+# Training data (for tokenizer training)
+input_path: "data/TinyStoriesV2-GPT4-train.txt"
+vocab_size: 10000

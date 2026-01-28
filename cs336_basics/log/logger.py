@@ -45,7 +45,8 @@ def setup_logging(cfg=None):
 
     name = _get_val(logging_cfg, "name", "cs336")
     logger = logging.getLogger(name)
-    logger.setLevel(logging.DEBUG)
+    level_str = _get_val(logging_cfg, "level", "INFO")
+    logger.setLevel(level_str)
 
     # Clear existing handlers to avoid duplicates/stale config
     if logger.handlers:

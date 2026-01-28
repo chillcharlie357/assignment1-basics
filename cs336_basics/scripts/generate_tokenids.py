@@ -20,11 +20,11 @@ class FileChunkIterable:
 
 if __name__ == "__main__":
     
-    vocab_path = "data/vocab/TinyStoriesV2-GPT4-train_vocab.pkl"
-    merges_path = "data/vocab/TinyStoriesV2-GPT4-train_merges.pkl"
+    vocab_path = "data/vocab/owt_train_vocab.pkl"
+    merges_path = "data/vocab/owt_train_merges.pkl"
     special_tokens = ["<|endoftext|>"]
-    input_file = "data/TinyStoriesV2-GPT4-train.txt"
-    tokenIDs_path = "data/tokenids/TinyStoriesV2-GPT4-train_tokenids.npy"
+    input_file = "data/owt_train.txt"
+    tokenIDs_path = "data/tokenids/owt_train_tokenids.npy"
 
     tokenizer = Tokenizer.from_files(vocab_filepath=vocab_path, 
                             merges_filepath=merges_path, 
