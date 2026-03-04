@@ -3,7 +3,7 @@ import torch
 import hydra
 from omegaconf import DictConfig, OmegaConf
 from cs336_basics.transformer import Transformer_LM, get_device
-from cs336_basics.training import gradient_clipping,get_batch,lr_scheduler,load_checkpoint,save_checkpoint,AdamW, cross_entropy
+from cs336_basics.training import gradient_clipping,get_batch,lr_scheduler,load_checkpoint,save_checkpoint,AdamW, cross_entropy, perplexity
 from cs336_basics.tokenizer import Tokenizer
 from cs336_basics.log import setup_logging
 
@@ -157,8 +157,15 @@ def main(cfg: DictConfig):
     os.makedirs(checkpoint_dir, exist_ok=True)
     
     # Logic to find the latest checkpoint
-    checkpoint_path = get_latest_checkpoint(checkpoint_dir, str(device))
+    checkpoint_path = None
+    if cfg.training.get("resume_from_checkpoint", True):
+        checkpoint_path = get_latest_checkpoint(checkpoint_dir, str(device))
+    else:
+        logger.info("Resume from checkpoint is disabled. Starting from scratch.")
     
+    output_dir = hydra.utils.to_absolute_path(cfg.training.output_dir)
+    os.makedirs(output_dir, exist_ok=True)
+   
     start_epoch = 0
     start_iter = 0
     if checkpoint_path:
@@ -229,28 +236,31 @@ def main(cfg: DictConfig):
                      current_checkpoint_path = os.path.join(checkpoint_dir, f"checkpoint_{device}_{timestamp}.pt")
                      save_checkpoint(model, optimizer, current_global_step + 1, current_checkpoint_path)
                      cleanup_checkpoints(checkpoint_dir, str(device))
-            
-            # Validation at end of epoch
-            if numpy_valid_dataset is not None:
-                logger.info(f"Running validation for epoch {epoch}...")
-                valid_loss = evaluate(model, numpy_valid_dataset, batch_size, max_seq_len, device)
-                logger.info(f"Epoch {epoch} validation loss: {valid_loss:.4f}")
-                run.log({"valid_loss": valid_loss, "epoch": epoch})
                 
-                if valid_loss < best_valid_loss:
-                    best_valid_loss = valid_loss
-                    best_checkpoint_path = os.path.join(checkpoint_dir, f"best_checkpoint_{device}.pt")
-                    save_checkpoint(model, optimizer, current_global_step + 1, best_checkpoint_path)
-                    logger.info(f"New best checkpoint saved with loss {valid_loss:.4f}")
+                # validate every 500 steps or at end of epoch
+                if numpy_valid_dataset is not None and (current_global_step + 1) % 500 == 0 or (iter == steps_per_epoch - 1):
+                    model.eval()
+            
+                    logger.info(f"Running validation for epoch {epoch} step {current_global_step}...")
+                    valid_loss = evaluate(model, numpy_valid_dataset, batch_size, max_seq_len, device)
+                    valid_perplexity = numpy.exp(valid_loss)
+                    logger.info(f"Epoch {epoch} validation loss: {valid_loss:.4f}, perplexity: {valid_perplexity:.4f}")
+                    run.log({"valid_loss": valid_loss, "valid_perplexity": valid_perplexity, "step": current_global_step})
+                    
+                    if valid_loss < best_valid_loss:
+                        best_valid_loss = valid_loss
+                        best_checkpoint_path = os.path.join(checkpoint_dir, f"best_checkpoint_{device}.pt")
+                        save_checkpoint(model, optimizer, current_global_step + 1, best_checkpoint_path)
+                        logger.info(f"New best checkpoint saved with loss {valid_loss:.4f}")
         
         # Reset start_iter after the first resumed epoch is done
         start_iter = 0
-        # save final checkpoint
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        final_checkpoint_path = os.path.join(checkpoint_dir, f"model_{device}_{timestamp}.pt")
-        save_checkpoint(model, optimizer, current_global_step + 1, final_checkpoint_path)
+    # save final checkpoint
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    final_checkpoint_path = os.path.join(output_dir, f"model_{device}_{timestamp}.pt")
+    save_checkpoint(model, optimizer, current_global_step + 1, final_checkpoint_path)
+    logger.info(f"Saved final model to {final_checkpoint_path}")
     
-        
     
     
     # Finish the run and upload any remaining data.

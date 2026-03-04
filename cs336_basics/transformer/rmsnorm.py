@@ -32,8 +32,10 @@ class RMSNorm(nn.Module):
 
     @override
     def load_state_dict(self, state_dict: Mapping[str, Any], strict: bool = True, assign: bool = False):
-        if "weight" in state_dict:
-             self.gain.data.copy_(state_dict["weight"])
+        new_state_dict = dict(state_dict)
+        if "weight" in new_state_dict:
+             new_state_dict["gain"] = new_state_dict.pop("weight")
+        super().load_state_dict(new_state_dict, strict, assign)
 
         
 

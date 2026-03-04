@@ -3,6 +3,7 @@ import torch.nn.functional as F
 import hydra
 from omegaconf import DictConfig
 import os
+import glob
 from cs336_basics.log import setup_logging
 from cs336_basics.training import load_checkpoint
 from cs336_basics.transformer import Transformer_LM
@@ -10,9 +11,36 @@ from cs336_basics.tokenizer import Tokenizer
 import numpy
 from cs336_basics.transformer.utils import get_device
 
-def decode(model: Transformer_LM, tokenizer: Tokenizer, max_seq_len: int, device: torch.device):
-    logger = setup_logging() # Ensure logger is setup if called independently, or reuse global
-    prompt = "Once upon a time, "
+def get_checkpoint_path(checkpoint_dir: str, device: str) -> str | None:
+    # 1. Try best checkpoint
+    best_path = os.path.join(checkpoint_dir, f"best_checkpoint_{device}.pt")
+    if os.path.exists(best_path):
+        return best_path
+        
+    # 2. Try final model timestamped
+    pattern = os.path.join(checkpoint_dir, f"model_{device}_*.pt")
+    files = glob.glob(pattern)
+    if files:
+        files.sort(key=os.path.getmtime)
+        return files[-1]
+        
+    # 3. Try latest checkpoint timestamped
+    pattern = os.path.join(checkpoint_dir, f"checkpoint_{device}_*.pt")
+    files = glob.glob(pattern)
+    if files:
+        files.sort(key=os.path.getmtime)
+        return files[-1]
+        
+    # 4. Fallback
+    old_path = os.path.join(checkpoint_dir, f"checkpoint_{device}.pt")
+    if os.path.exists(old_path):
+        return old_path
+        
+    return None
+
+def decode(model: Transformer_LM, tokenizer: Tokenizer, cfg: DictConfig, device: torch.device):
+    logger = setup_logging(cfg)
+    prompt = cfg.decoding.prompt
     input_ids = tokenizer.encode(prompt)
     # 增加batch维度
     input_tensor = torch.tensor(input_ids, dtype=torch.long).unsqueeze(0).to(device)
@@ -32,10 +60,10 @@ def decode(model: Transformer_LM, tokenizer: Tokenizer, max_seq_len: int, device
     
     output_ids = model.generate(
         input_ids=input_tensor,
-        max_new_tokens=50,
-        max_seq_len=max_seq_len,
-        temperature=0.8,
-        top_p=0.9,
+        max_new_tokens=cfg.decoding.max_new_tokens,
+        max_seq_len=cfg.model.max_seq_len,
+        temperature=cfg.decoding.temperature,
+        top_p=cfg.decoding.top_p,
         eos_token_id=eos_token_id
     )
     
@@ -71,20 +99,29 @@ def main(cfg: DictConfig):
         num_heads=num_heads,
         d_model=d_model,
         d_ff=d_ff,
-    )
+    ).to(device)
     
-    checkpoint_dir = hydra.utils.to_absolute_path("data/checkpoints")
-    checkpoint_path = os.path.join(checkpoint_dir, f"checkpoint_{device}.pt")
+    checkpoint_dir = hydra.utils.to_absolute_path(cfg.decoding.checkpoint_dir)
+    
+    if cfg.decoding.checkpoint_path:
+        checkpoint_path = hydra.utils.to_absolute_path(cfg.decoding.checkpoint_path)
+    else:
+        checkpoint_path = get_checkpoint_path(checkpoint_dir, str(device))
+        
+    logger.info(f"Loading checkpoint from {checkpoint_path}")
 
-    try:
-        load_checkpoint(checkpoint_path, model)
-    except FileNotFoundError:
+    if checkpoint_path:
+        try:
+            load_checkpoint(checkpoint_path, model)
+        except FileNotFoundError:
+            logger.warning("Checkpoint file not found, using random weights")
+        except Exception as e:
+            logger.error(f"Error loading checkpoint: {e}")
+            raise e
+    else:
         logger.warning("No checkpoint found, using random weights")
-    except Exception as e:
-        logger.error(f"Error loading checkpoint: {e}")
-        raise e
 
-    decode(model, tokenizer, max_seq_len, device)
+    decode(model, tokenizer, cfg, device)
 
 if __name__ == "__main__":
     main()

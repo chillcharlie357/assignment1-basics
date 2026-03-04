@@ -3,6 +3,15 @@ import torch
 from einops import einsum, rearrange
 from .utils import get_device
 from .linear import Linear
+
+
+def silu(x: torch.Tensor) -> torch.Tensor:
+    """
+    Compute the SiLU (Sigmoid Linear Unit) function element-wise.
+    silu(x) = x * sigmoid(x)
+    """
+    return x * torch.sigmoid(x)
+
 class SwiGLU(nn.Module):
     def __init__(self, d_model: int, d_ff: int | None = None, device: torch.device | None = None, dtype: torch.dtype | None = None) -> None:
         """
@@ -35,12 +44,6 @@ class SwiGLU(nn.Module):
         # self.w2 = nn.Parameter(torch.ones(self.d_model, self.d_ff, device=self.device, dtype=self.dtype)) 
         self.w2 = Linear(self.d_ff, self.d_model,self.device, self.dtype)
 
-    def _silu(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        silu(x) = x * sigmod(x)
-        """
-        x.to(self.device)
-        return x * torch.sigmoid(x)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x =  x.to(self.device)
@@ -56,7 +59,7 @@ class SwiGLU(nn.Module):
         part1 = self.w1.forward(x)
         part2 = self.w3.forward(x)
         
-        inner = self._silu(part1) * part2
+        inner = silu(part1) * part2
         
         # output = einsum(
         #     inner, self.w2,

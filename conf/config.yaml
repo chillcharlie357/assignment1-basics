@@ -4,6 +4,7 @@ defaults:
   - training: default
   - logging: default
   - tokenizer: default
+  - decoding: default
   - experiment: null
   - _self_
 

@@ -37,5 +37,10 @@ def cross_entropy(logits: Float[Tensor, "batch_size seq_len vocab_size"], target
     return avg_p
 
 
-def perplexity():
-    pass
+def perplexity(logits: Float[Tensor, "batch_size seq_len vocab_size"], targets: Int[Tensor, "batch_size seq_len"]) -> Float[Tensor, ""]:
+    """
+    Compute the perplexity of the model given logits and targets.
+    Perplexity is defined as exp(cross_entropy_loss).
+    """
+    loss = cross_entropy(logits, targets)
+    return torch.exp(loss)

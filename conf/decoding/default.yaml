@@ -1,0 +1,7 @@
+prompt: "Once upon a time, "
+max_new_tokens: 256
+temperature: 0.1
+top_p: 0.9
+checkpoint_dir: "data/checkpoints"
+# checkpoint_path: "data/checkpoints/checkpoint_cuda_20260128_234935.pt"
+checkpoint_path: "data/outputs/model_cuda_20260128_204734.pt"
